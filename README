@@ -1,0 +1,23 @@
+Description
+==========================
+This module provides an interface to the LTS UW People plugin.  Using the UW
+Groups LTS plugin, the module fetches a "master list" of NetIDs based on a list
+of groups and then pulls the majority of information from the UW PWS into Drupal
+using content types as storage.
+
+Created by the University of Washington Information School; see LICENSE file.
+
+
+Install
+==========================
+Move folder to DRUPAL_ROOT/sites/all/modules and rename to "uwpeople".  Enable
+the module in Drupal.  NOTE: LTS, the UW Groups LTS plugin, and the UW People
+LTS plugin will have to be setup before this module will work.
+
+
+Support
+==========================
+If you find bugs or have suggestions for improving this project, please open
+a new ticket on the project page or send an email to iweb@uw.edu .
+
+Project page: https://drupal.ischool.uw.edu/projects/projects/uwpeople-drupal .
