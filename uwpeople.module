@@ -1,0 +1,295 @@
+<?php
+
+/***************************************************************
+ * UW People Module                                            *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+/**
+ * @file
+ * UW People main module file.
+ */
+
+module_load_include('inc', 'uwpeople');
+module_load_include('inc', 'uwpeople', 'uwpeople.admin');
+module_load_include('inc', 'uwpeople', 'uwpeople.ajax');
+
+/**
+ * Implementation of hook_perm().
+ */
+function uwpeople_perm() {
+  return array(UWPEOPLE_PERM);
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function uwpeople_menu() {
+  $items = array();
+  
+  $items['admin/settings/uwpeople'] = array(
+    'title' => t('UW People'),
+    'description' => t('Configure UW People settings.'),
+    'page callback' => '_uwpeople_admin_page',
+    'access arguments' => array(UWPEOPLE_PERM),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  $items['admin/uwpeople/refresh'] = array(
+    'title' => t('UW People Refresh'),
+    'description' => t('Refresh people data.'),
+    'page callback' => '_uwpeople_refresh_page',
+    'access arguments' => array(UWPEOPLE_PERM),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['admin/uwpeople/ajax'] = array(
+    'title' => t('UW People AJAX'),
+    'description' => t('UW People AJAX interface.'),
+    'page callback' => '_uwpeople_ajax_page',
+    'access arguments' => array(UWPEOPLE_PERM),
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/***************************************************************
+ *                          Field                              *
+ ***************************************************************/
+
+/**
+ * Implementation of hook_field_info().
+ */
+function uwpeople_field_info() {
+  return array_merge(
+    _uwpeople_affiliation_field_info(),
+    _uwpeople_collaborator_field_info(),
+    _uwpeople_membership_field_info(),
+    _uwpeople_education_field_info(),
+    _uwpeople_keywork_field_info(),
+    _uwpeople_recognition_field_info(),
+    _uwpeople_project_field_info()
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function uwpeople_field_settings($op, $field) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'uwpeople_affiliation':
+      return _uwpeople_affiliation_field_settings($op, $field);
+    case 'uwpeople_collaborator':
+      return _uwpeople_collaborator_field_settings($op, $field);
+    case 'uwpeople_membership':
+      return _uwpeople_membership_field_settings($op, $field);
+    case 'uwpeople_education':
+      return _uwpeople_education_field_settings($op, $field);
+    case 'uwpeople_keywork':
+      return _uwpeople_keywork_field_settings($op, $field);
+    case 'uwpeople_recognition':
+      return _uwpeople_recognition_field_settings($op, $field);
+    case 'uwpeople_project':
+      return _uwpeople_project_field_settings($op, $field);
+  }
+}
+
+/**
+ * Implementatio of hook_field().
+ */
+function uwpeople_field($op, &$node, $field, &$items, $teaser, $page) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'uwpeople_affiliation':
+      return _uwpeople_affiliation_field($op, $node, $field, $items, $teaser, $page);
+    case 'uwpeople_collaborator':
+      return _uwpeople_collaborator_field($op, $node, $field, $items, $teaser, $page);
+    case 'uwpeople_membership':
+      return _uwpeople_membership_field($op, $node, $field, $items, $teaser, $page);
+    case 'uwpeople_education':
+      return _uwpeople_education_field($op, $node, $field, $items, $teaser, $page);
+    case 'uwpeople_keywork':
+      return _uwpeople_keywork_field($op, $node, $field, $items, $teaser, $page);
+    case 'uwpeople_recognition':
+      return _uwpeople_recognition_field($op, $node, $field, $items, $teaser, $page);
+    case 'uwpeople_project':
+      return _uwpeople_project_field($op, $node, $field, $items, $teaser, $page);
+  }
+}
+
+/**
+ * Implementation of hook_content_is_empty().
+ */
+function uwpeople_content_is_empty($item, $field) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'uwpeople_affiliation':
+      return _uwpeople_affiliation_content_is_empty($item, $field);
+    case 'uwpeople_collaborator':
+      return _uwpeople_collaborator_content_is_empty($item, $field);
+    case 'uwpeople_membership':
+      return _uwpeople_membership_content_is_empty($item, $field);
+    case 'uwpeople_education':
+      return _uwpeople_education_content_is_empty($item, $field);
+    case 'uwpeople_keywork':
+      return _uwpeople_keywork_content_is_empty($item, $field);
+    case 'uwpeople_recognition':
+      return _uwpeople_recognition_content_is_empty($item, $field);
+    case 'uwpeople_project':
+      return _uwpeople_project_content_is_empty($item, $field);
+  }
+}
+
+/**
+ * Implementation of hook_content_generate().
+ */
+function uwpeople_content_generate($node, $field) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'uwpeople_affiliation':
+      return _uwpeople_affiliation_content_generate($node, $field);
+    case 'uwpeople_collaborator':
+      return _uwpeople_collaborator_content_generate($node, $field);
+    case 'uwpeople_membership':
+      return _uwpeople_membership_content_generate($node, $field);
+    case 'uwpeople_education':
+      return _uwpeople_education_content_generate($node, $field);
+    case 'uwpeople_keywork':
+      return _uwpeople_keywork_content_generate($node, $field);
+    case 'uwpeople_recognition':
+      return _uwpeople_recognition_content_generate($node, $field);
+    case 'uwpeople_project':
+      return _uwpeople_project_content_generate($node, $field);
+  }
+}
+
+
+/***************************************************************
+ *                         Formatter                           *
+ ***************************************************************/
+
+/**
+ * Implementation of hook_theme().
+ */
+function uwpeople_theme() {
+  $default = array(
+    'uwpeople_formatter_default' => array(
+      'arguments' => array('element' => NULL, ),
+    ),
+  );
+  
+  return array_merge(
+    $default,
+    _uwpeople_affiliation_theme(),
+    _uwpeople_collaborator_theme(),
+    _uwpeople_membership_theme(),
+    _uwpeople_education_theme(),
+    _uwpeople_keywork_theme(),
+    _uwpeople_recognition_theme(),
+    _uwpeople_project_theme()
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function uwpeople_field_formatter_info() {
+  $default = array(
+    'default' => array(
+      'label' => t('Default'),
+      'field types' => array(
+        'uwpeople_affiliation',
+        'uwpeople_collaborator',
+        'uwpeople_membership',
+        'uwpeople_education',
+        'uwpeople_keywork',
+        'uwpeople_recognition',
+        'uwpeople_project',
+      ),
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+  );
+  
+  return array_merge(
+    $default,
+    _uwpeople_affiliation_field_formatter_info(),
+    _uwpeople_collaborator_field_formatter_info(),
+    _uwpeople_membership_field_formatter_info(),
+    _uwpeople_education_field_formatter_info(),
+    _uwpeople_keywork_field_formatter_info(),
+    _uwpeople_recognition_field_formatter_info(),
+    _uwpeople_project_field_formatter_info()
+  );
+}
+
+/**
+ * Theme function for 'default' field formatter.
+ */
+function theme_uwpeople_formatter_default($element) {
+  if (_uwpeople_affiliation_can_theme($element))
+    return _uwpeople_affiliation_default_theme($element);
+  else if (_uwpeople_collaborator_can_theme($element))
+    return _uwpeople_collaborator_default_theme($element);
+  else if (_uwpeople_membership_can_theme($element))
+    return _uwpeople_membership_default_theme($element);
+  else if (_uwpeople_education_can_theme($element))
+    return _uwpeople_education_default_theme($element);
+  else if (_uwpeople_keywork_can_theme($element))
+    return _uwpeople_keywork_default_theme($element);
+  else if (_uwpeople_recognition_can_theme($element))
+    return _uwpeople_recognition_default_theme($element);
+  else if (_uwpeople_project_can_theme($element))
+    return _uwpeople_project_default_theme($element);
+}
+
+
+/***************************************************************
+ *                           Widget                            *
+ ***************************************************************/
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function uwpeople_widget_info() {
+  return array_merge(
+    _uwpeople_affiliation_widget_info(),
+    _uwpeople_collaborator_widget_info(),
+    _uwpeople_membership_widget_info(),
+    _uwpeople_education_widget_info(),
+    _uwpeople_keywork_widget_info(),
+    _uwpeople_recognition_widget_info(),
+    _uwpeople_project_widget_info()
+  );
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function uwpeople_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'uwpeople_affiliation':
+      return _uwpeople_affiliation_widget($form, $form_state, $field, $items, $delta);
+    case 'uwpeople_collaborator':
+      return _uwpeople_collaborator_widget($form, $form_state, $field, $items, $delta);
+    case 'uwpeople_membership':
+      return _uwpeople_membership_widget($form, $form_state, $field, $items, $delta);
+    case 'uwpeople_education':
+      return _uwpeople_education_widget($form, $form_state, $field, $items, $delta);
+    case 'uwpeople_keywork':
+      return _uwpeople_keywork_widget($form, $form_state, $field, $items, $delta);
+    case 'uwpeople_recognition':
+      return _uwpeople_recognition_widget($form, $form_state, $field, $items, $delta);
+    case 'uwpeople_project':
+      return _uwpeople_project_widget($form, $form_state, $field, $items, $delta);
+  }
+}

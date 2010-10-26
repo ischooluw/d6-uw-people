@@ -5,6 +5,13 @@ Groups LTS plugin, the module fetches a "master list" of NetIDs based on a list
 of groups and then pulls the majority of information from the UW PWS into Drupal
 using content types as storage.
 
+The content types defined by this module have extra fields to help aid
+building a student/faculty/staff directory.
+
+NOTE: It is best not to modify the built in content types defined by this
+module - any changes you make will likely be over-written in an update.
+Currently extensions to the data outside of those built-in are not supported.
+
 Created by the University of Washington Information School; see LICENSE file.
 
 
@@ -13,6 +20,20 @@ Install
 Move folder to DRUPAL_ROOT/sites/all/modules and rename to "uwpeople".  Enable
 the module in Drupal.  NOTE: LTS, the UW Groups LTS plugin, and the UW People
 LTS plugin will have to be setup before this module will work.
+
+If you want to refresh the data on a set schedule the module includes its own
+cron script "uwpeople_cron.php" that should be scheduled separately from Drupal's
+main cron script.
+
+
+Recovering from Errors
+==========================
+If an error occurs during an AJAX update (i.e. through the settings page) and
+you get repeated "Another user is currently refreshing people data." errors,
+the following must be done to "reset" the module:
+
+  1) Restart Apache [non-graceful] (or whatever web server you are using)
+  2) Delete the variable from the {variable} table with name "uwpeople_ajax_token"
 
 
 Support

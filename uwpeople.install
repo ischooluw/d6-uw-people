@@ -1,0 +1,93 @@
+<?php
+
+/***************************************************************
+ * UW People Module                                            *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+module_load_include('inc', 'uwpeople');
+
+/**
+ * @file
+ * uwpeople install.
+ */
+
+/**
+ * Implementation of hook_requirements().
+ */
+function uwpeople_requirements($phase) {
+  return easycck_verify_requirements($phase, 'uwpeople');
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function uwpeople_install() {
+  $timeout = ini_get('max_execution_time');
+  ini_set('max_execution_time', 0);
+  
+  drupal_load('module', 'content');
+  content_notify('install', 'uwpeople');
+  
+  ini_set('max_execution_time', $timeout);
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function uwpeople_uninstall() {
+  variable_del(UWPEOPLE_ALL_PEOPLE_ROLE);
+  variable_del(UWPEOPLE_IGNORE);
+  variable_del(UWPEOPLE_FACULTY_ROLES);
+  variable_del(UWPEOPLE_STAFF_ROLES);
+  variable_del(UWPEOPLE_STUDENT_ROLES);
+  variable_del(UWPEOPLE_PHD_ROLES);
+  variable_del(UWPEOPLE_RESEARCHER_ROLES);
+  
+  variable_del('uwpeople_ajax_token');
+  variable_del('uwpeople_ajax_progress');
+  variable_del('uwpeople_ajax_message');
+  variable_del('uwpeople_ajax_cancel');
+  
+  easycck_delete_type('person');
+  easycck_delete_type('student');
+  easycck_delete_type('employee');
+  
+  easycck_delete_type('simpleprof');
+  easycck_delete_type('extendedprof');
+  
+  drupal_load('module', 'content');
+  content_notify('enable', 'uwpeople');
+  content_notify('uninstall', 'uwpeople');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function uwpeople_enable() {
+  $timeout = ini_get('max_execution_time');
+  ini_set('max_execution_time', 0);
+  
+  drupal_load('module', 'content');
+  content_notify('enable', 'uwpeople');
+  
+  $path = drupal_get_path('module', 'uwpeople') . '/';
+  easycck_install_type($path . 'simpleprof.def', 'simpleprof');
+  easycck_install_type($path . 'extendedprof.def', 'extendedprof');
+  
+  easycck_install_type($path . 'employee.def', 'employee');
+  easycck_install_type($path . 'student.def', 'student');
+  easycck_install_type($path . 'person.def', 'person');
+  
+  ini_set('max_execution_time', $timeout);
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function uwpeople_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'uwpeople');
+}
