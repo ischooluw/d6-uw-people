@@ -33,7 +33,7 @@ you get repeated "Another user is currently refreshing people data." errors,
 the following must be done to "reset" the module:
 
   1) Restart Apache [non-graceful] (or whatever web server you are using)
-  2) Delete the variable from the {variable} table with name "uwpeople_ajax_token"
+  2) Delete the variable from the {variable} table with name "uwpeople_lock"
 
 
 Support

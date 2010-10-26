@@ -100,7 +100,7 @@ function uwpeople_field_settings($op, $field) {
 }
 
 /**
- * Implementatio of hook_field().
+ * Implementation of hook_field().
  */
 function uwpeople_field($op, &$node, $field, &$items, $teaser, $page) {
   $name = $field['type'];
