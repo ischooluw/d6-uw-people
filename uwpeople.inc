@@ -91,11 +91,46 @@ function _uwpeople_var($var, $val = NULL) {
   return NULL;
 }
 
+/**
+ * Logs a watchdog error.
+ */
 function _uwpeople_error($msg, $var = NULL) {
   if ($var)
     watchdog('UW People', $msg, array('%var' => $var,), WATCHDOG_ERROR);
   else
     watchdog('UW People', $msg, array(), WATCHDOG_ERROR);
+}
+
+/**
+ * Acquires a lock to update the data.
+ * @return Lock value [<code>String</code>] if successful; <code>FALSE</code> otherwise.
+ */
+function _uwpeople_lock() {
+  if (!variable_get('uwpeople_lock', NULL)) {
+    $token = drupal_get_token();
+    variable_set('uwpeople_lock', $token);
+    return $token;
+  }
+  
+  return FALSE;
+}
+
+/**
+ * Determines if a lock succeeded or failed.
+ */
+function _uwpeople_locked($lock) {
+  return $lock ? TRUE : FALSE;
+}
+
+/**
+ * Releases update lock.
+ * @see _uwpeople_lock
+ */
+function _uwpeople_unlock($lock) {
+  $token = variable_get('uwpeople_lock', NULL);
+  
+  if ($token == $lock)
+    variable_del('uwpeople_lock');
 }
 
 /**
@@ -322,6 +357,46 @@ function _uwpeople_reload_student($regid, $data, &$node) {
 }
 
 /**
+ * Deletes employee data for an individual.
+ */
+function _uwpeople_delete_employee($regid) {
+  $employee = db_query("SELECT nid FROM {node} WHERE type = 'employee' AND title = '%s'", $regid);
+    
+  if ($employee)
+    easycck_node_delete(db_result($employee));
+}
+
+/**
+ * Deletes student data for an individual.
+ */
+function _uwpeople_delete_student($regid) {
+  $student = db_query("SELECT nid FROM {node} WHERE type = 'student' AND title = '%s'", $regid);
+  
+  if ($student)
+    easycck_node_delete(db_result($student));
+}
+
+/**
+ * Deletes "simpleprof" data for an individual.
+ */
+function _uwpeople_delete_simpleprof($regid) {
+  $extended = db_query("SELECT nid FROM {node} WHERE type = 'extendedprof' AND title = '%s'", $regid);
+  
+  if ($extended)
+    easycck_node_delete(db_result($extended));
+}
+
+/**
+ * Deletes "extendedprof" data for an individual.
+ */
+function _uwpeople_delete_extendedprof($regid) {
+  $simple = db_query("SELECT nid FROM {node} WHERE type = 'simpleprof' AND title = '%s'", $regid);
+  
+  if ($simple)
+    easycck_node_delete(db_result($simple));
+}
+
+/**
  * Reload a persons data.
  */
 function _uwpeople_reload_person($netid) {
@@ -341,10 +416,11 @@ function _uwpeople_reload_person($netid) {
   
   $settings = _uwpeople_role_settings();
   $person = $data['person'];
-  $node = _uwpeople_node_load('person', $person['uwregid']);
+  $regid = $person['uwregid'];
+  $node = _uwpeople_node_load('person', $regid);
   
   if (!$node) {
-    $node = easycck_node_create('person', $person['uwregid']);
+    $node = easycck_node_create('person', $regid);
     easycck_set_int_field($node, 'field_person_firstmiddle_use', 0);
     easycck_set_int_field($node, 'field_person_last_use', 0);
     easycck_set_int_field($node, 'field_person_publish', $person['publish_in_whitepages'] ? 1 : 0);
@@ -367,31 +443,43 @@ function _uwpeople_reload_person($netid) {
     $dirs = array();
     
     if ($faculty || $staff || $researcher) {
-      if (!_uwpeople_reload_employee($person['uwregid'], $data, $node)) {
+      if (!_uwpeople_reload_employee($regid, $data, $node)) {
         _uwpeople_error('Failed to load employee data for "%var".', $netid);
         return FALSE;
       }
     }
+    else {
+      _uwpeople_delete_employee($regid);
+    }
     
     if ($faculty || $phd || $researcher) {
-      if (!_uwpeople_reload_extendedprof($person['uwregid'], $data, $node)) {
+      if (!_uwpeople_reload_extendedprof($regid, $data, $node)) {
         _uwpeople_error('Failed to load extended profile for "%var".', $netid);
         return FALSE;
       }
     }
+    else {
+      _uwpeople_delete_extendedprof($regid);
+    }
     
     if ($staff) {
-      if (!_uwpeople_reload_simpleprof($person['uwregid'], $data, $node)) {
+      if (!_uwpeople_reload_simpleprof($regid, $data, $node)) {
         _uwpeople_error('Failed to load simple profile for "%var".', $netid);
         return FALSE;
       }
     }
+    else {
+      _uwpeople_delete_simpleprof($regid);
+    }
     
     if ($student || $phd) {
-      if (!_uwpeople_reload_student($person['uwregid'], $data, $node)) {
+      if (!_uwpeople_reload_student($regid, $data, $node)) {
         _uwpeople_error('Failed to load student data for "%var".', $netid);
         return FALSE;
       }
+    }
+    else {
+      _uwpeople_delete_student($regid);
     }
     
     if ($faculty)
@@ -448,22 +536,12 @@ function _uwpeople_get_current() {
  * Deletes records of a person.
  */
 function _uwpeople_delete($nid, $data) {
-  $employee = db_query("SELECT nid FROM {node} WHERE type = 'employee' AND title = '%s'", $data['title']);
-  $student = db_query("SELECT nid FROM {node} WHERE type = 'student' AND title = '%s'", $data['title']);
-  $extended = db_query("SELECT nid FROM {node} WHERE type = 'extendedprof' AND title = '%s'", $data['title']);
-  $simple = db_query("SELECT nid FROM {node} WHERE type = 'simpleprof' AND title = '%s'", $data['title']);
+  $regid = $data['title'];
   
-  if ($employee)
-    easycck_node_delete(db_result($employee));
-  
-  if ($student)
-    easycck_node_delete(db_result($student));
-  
-  if ($extended)
-    easycck_node_delete(db_result($extended));
-  
-  if ($simple)
-    easycck_node_delete(db_result($simple));
+  _uwpeople_delete_employee($regid);
+  _uwpeople_delete_student($regid);
+  _uwpeople_delete_simpleprof($regid);
+  _uwpeople_delete_extendedprof($regid);
   
   easycck_node_delete($nid);
 }
@@ -488,7 +566,9 @@ function _uwpeople_cleanup($netids) {
 function _uwpeople_reload_all() {
   cache_clear_all();
   
-  if (variable_get('uwpeople_ajax_token', NULL)) {
+  $lock = _uwpeople_lock();
+  
+  if (!_uwpeople_locked($lock)) {
     _uwpeople_error('Reload already in progress.');
     return FALSE;
   }
@@ -497,6 +577,7 @@ function _uwpeople_reload_all() {
   
   if (!$netids) {
     _uwpeople_error('Failed to load all netids with group "%var".', _uwpeople_var(UWPEOPLE_ALL_PEOPLE_ROLE));
+    _uwpeople_unlock($lock);
     return FALSE;
   }
   
@@ -512,6 +593,7 @@ function _uwpeople_reload_all() {
     usleep(10000);
   }
   
+  _uwpeople_unlock($lock);
   ini_set('max_execution_time', $timeout);
   cache_clear_all();
   

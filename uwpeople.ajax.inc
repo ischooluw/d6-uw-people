@@ -12,33 +12,39 @@
  * Contains the AJAX interface for the UW People module.
  */
 
-function _uwpeople_ajax_set_progress($percent, $msg) {
+/**
+ * Sets the progress percentage and message to be displayed to the client.
+ */
+function _uwpeople_ajax_set_progress($percent, $msg, $error = FALSE) {
   if (!$msg) {
     variable_del('uwpeople_ajax_progress');
     variable_del('uwpeople_ajax_message');
+    variable_del('uwpeople_ajax_error');
   }
   else {
     variable_set('uwpeople_ajax_progress', strval(intval($percent)));
     variable_set('uwpeople_ajax_message', strval($msg));
+    variable_set('uwpeople_ajax_error', $error);
   }
 }
 
+/**
+ * Gets an AJAX token to use.
+ */
 function _uwpeople_ajax_get_token() {
-  $token = NULL;
-  
-  if (!variable_get('uwpeople_ajax_token', NULL)) {
-    $token = drupal_get_token();
-    variable_set('uwpeople_ajax_token', $token);
-    _uwpeople_ajax_set_progress(NULL, NULL);
-  }
+  $token = variable_get('uwpeople_lock', NULL);
+  variable_set('uwpeople_ajax_token', $token);
   
   return $token;
 }
 
+/**
+ * Includes needed JavaScript for the AJAX refresh page.
+ */
 function _uwpeople_js_include($token) {
   $settings = array(
     'destination_path' => '/admin/settings/uwpeople',
-    'redirect_timeout' => 1500,
+    'redirect_timeout' => 2000,
     'ajax_url' => '/admin/uwpeople/ajax',
     'ajax_token' => $token,
     'refresh_timeout' => 1000,
@@ -49,25 +55,32 @@ function _uwpeople_js_include($token) {
   drupal_add_js(drupal_get_path('module', 'uwpeople') . '/uwpeople.js', 'module');
 }
 
+/**
+ * Callback for the AJAX refresh page.
+ */
 function _uwpeople_refresh_page() {
   if (!user_access(UWPEOPLE_PERM)) {
     drupal_set_message(t('You are unauthorized to refresh people data.'), 'error');
     _uwpeople_error('Unauthorized user attempted to refresh data.');
   }
   else {
-    $token = _uwpeople_ajax_get_token();
+    $lock = _uwpeople_lock();
     
-    if (!$token)
-      drupal_set_message(t('Another user is currently refreshing people data.'), 'error');
+    if (_uwpeople_locked($lock))
+      _uwpeople_js_include(_uwpeople_ajax_get_token());
     else
-      _uwpeople_js_include($token);
+      drupal_set_message(t('Another user is currently refreshing people data.'), 'error');
   }
   
-  return '<div id="#message"></div><br /><div id="uwpeople_progress_container"></div><br />' .
+  return '<div id="people_refresh_message"></div><br /><div id="uwpeople_progress_container"></div><br />' .
   '<div id="uwpeople_refresh_form_container"><form id="uwpeople_refresh_form" method="post" action="">' .
   '<input id="uwpeople-refresh-cancel" class="form-submit" type="submit" value="Cancel" /></form></div>';
 }
 
+/**
+ * AJAX version of <code>_uwpeople_cleanup</code>.
+ * @see _uwpeople_cleanup
+ */
 function _uwpeople_ajax_cleanup($netids) {
   _uwpeople_ajax_set_progress(-1, 'Preparing to clean...');
   
@@ -99,13 +112,18 @@ function _uwpeople_ajax_cleanup($netids) {
   return TRUE;
 }
 
+/**
+ * Handles critical errors in the the AJAX handler to ensure a clean shutdown.
+ */
 function _uwpeople_critical_error($errno, $errstr, $errfile, $errline) {
   ob_start();
   debug_print_backtrace();
   $backtrace = ob_end_clean();
   
   _uwpeople_error("Critical error for $errfile:$errline - $errstr ($errno)\nBacktrace: $backtrace");
-  variable_del('uwpeople_ajax_token');
+  _uwpeople_ajax_set_progress(-1, 'Critical error, please check watchdog.', TRUE);
+  _uwpeople_unlock(variable_get('uwpeople_ajax_token', NULL));
+  
   cache_clear_all();
   
   exit(1);
@@ -113,6 +131,10 @@ function _uwpeople_critical_error($errno, $errstr, $errfile, $errline) {
   return FALSE;
 }
 
+/**
+ * AJAX version of <code>_uwpeople_reload_all</code>.
+ * @see _uwpeople_reload_all
+ */
 function _uwpeople_ajax_start($token) {
   drupal_json();
   cache_clear_all();
@@ -122,6 +144,7 @@ function _uwpeople_ajax_start($token) {
     return;
   }
   
+  $lock = $token;
   set_error_handler('_uwpeople_critical_error', E_ALL ^ E_USER_WARNING ^ E_NOTICE);
   
   $timeout = ini_get('max_execution_time');
@@ -129,13 +152,15 @@ function _uwpeople_ajax_start($token) {
   ini_set('max_execution_time', 0);
   ignore_user_abort(TRUE);
   
-  _uwpeople_ajax_set_progress(-1, 'Initalizing...');
+  _uwpeople_ajax_set_progress(-1, 'Initializing...');
   
   $netids = _uwpeople_all_netids();
   
   if (!$netids) {
-    _uwpeople_error('Failed to load all netids with group "%var".', _uwpeople_var(UWPEOPLE_ALL_PEOPLE_ROLE));
-    return FALSE;
+    _uwpeople_error('Failed to load all NetIDs.');
+    _uwpeople_ajax_set_progress(-1, 'Error loading all NetIDs.', TRUE);
+    _uwpeople_unlock($lock);
+    return;
   }
   
   $total = count($netids) + 1;
@@ -149,6 +174,7 @@ function _uwpeople_ajax_start($token) {
       
       if (connection_status() != CONNECTION_NORMAL) {
         _uwpeople_error('AJAX refresh canceled.');
+        $error = TRUE;
         break;
       }
       
@@ -161,29 +187,45 @@ function _uwpeople_ajax_start($token) {
       usleep(10000);
     }
     
-    _uwpeople_ajax_set_progress(100, 'Done');
+    if (!$error)
+      _uwpeople_ajax_set_progress(100, 'Done');
+    else
+      _uwpeople_ajax_set_progress(-1, 'Canceled', TRUE);
   }
   else {
+    _uwpeople_ajax_set_progress(-1, 'Error cleaning.', TRUE);
     $error = TRUE;
   }
   
-  variable_del('uwpeople_ajax_token');
+  _uwpeople_unlock($lock);
   cache_clear_all();
   
   echo drupal_to_js(array("error" => $error, ));
+  flush();
   
   ini_set('max_execution_time', $timeout);
   ini_set('ignore_user_abort', $ignore);
 }
 
+/**
+ * Callback for AJAX script - get current progress.
+ */
 function _uwpeople_ajax_progress($token) {
+  if (variable_get('uwpeople_ajax_token', NULL) !== $token) {
+    drupal_json(array("error" => TRUE, ));
+    return;
+  }
+  
   drupal_json(array(
     "progress" => intval(variable_get('uwpeople_ajax_progress', 0)),
     "message" => variable_get('uwpeople_ajax_message', 'N/A'),
-    "error" => FALSE,
+    "error" => variable_get('uwpeople_ajax_error', TRUE),
   ));
 }
 
+/**
+ * Callback for AJAX script - finish execution.
+ */
 function _uwpeople_ajax_finish($token) {
   if (variable_get('uwpeople_ajax_token', NULL) !== $token) {
     drupal_json(array("error" => TRUE, ));
@@ -194,6 +236,9 @@ function _uwpeople_ajax_finish($token) {
   drupal_json(array("error" => FALSE, ));
 }
 
+/**
+ * Callback for AJAX handler.
+ */
 function _uwpeople_ajax_page() {
   if (!$_POST['action'] || !$_POST['token']) {
     drupal_json(array("error" => TRUE, ));
