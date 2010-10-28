@@ -2,6 +2,6 @@ name = Directory Profile
 description = Extends the UW People module to provide storage for user profiles.
 package = University of Washington Information School
 core = 6.x
-version = "6.x-1.x-dev"
+version = "6.x-1.0-alpha3"
 dependencies[] = uwpeople
 dependencies[] = reverse_node_reference
