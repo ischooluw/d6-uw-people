@@ -1,7 +1,7 @@
 <?php
 
 /***************************************************************
- * UW People Module                                            *
+ * Directory Profile Module                                    *
  *                                                             *
  * Created by the University of Washington Information School. *
  * Be sure to read README and LICENSE.                         *
@@ -17,17 +17,17 @@
  *                          Field                              *
  ***************************************************************/
 
-function _uwpeople_recognition_field_info() {
+function _dirprof_recognition_field_info() {
   return array(
-    'uwpeople_recognition' => array(
+    'dirprof_recognition' => array(
       'label' => t('Recognition'),
-      'description' => t('A recognition of an individual - defined by the UW People module.'),
+      'description' => t('A recognition of an individual - defined by the Directory Profile module.'),
       'content_icon' => 'icon_content_text.png',
     ),
   );
 }
 
-function _uwpeople_recognition_field_settings($op, $field) {
+function _dirprof_recognition_field_settings($op, $field) {
   switch ($op) {
     case 'form':
       return array();
@@ -83,7 +83,7 @@ function _uwpeople_recognition_field_settings($op, $field) {
   }
 }
 
-function _uwpeople_recognition_field($op, &$node, $field, &$items, $teaser, $page) {
+function _dirprof_recognition_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
     case 'validate':
       if (is_array($items) && !empty($items)) {
@@ -94,7 +94,7 @@ function _uwpeople_recognition_field($op, &$node, $field, &$items, $teaser, $pag
             unset($item['_error_element']);
           }
           
-          if (_uwpeople_recognition_content_is_empty($item, $field))
+          if (_dirprof_recognition_content_is_empty($item, $field))
             continue;
           
           if (!empty($item['recognition_details']) && strlen($item['recognition_details']) > 1024) {
@@ -147,11 +147,11 @@ function _uwpeople_recognition_field($op, &$node, $field, &$items, $teaser, $pag
   }
 }
 
-function _uwpeople_recognition_content_is_empty($item, $field) {
+function _dirprof_recognition_content_is_empty($item, $field) {
   return empty($item['recognition_title']) && empty($item['recognition_year']) && empty($item['recognition_details']) && empty($item['recognition_link']);
 }
 
-function _uwpeople_recognition_content_generate($node, $field) {
+function _dirprof_recognition_content_generate($node, $field) {
   $node_field = array();
   $node_field['recognition_title'] = 'Recognition ' . rand(0, 99999);
   $node_field['recognition_year'] = rand(1964, 2010);
@@ -166,27 +166,27 @@ function _uwpeople_recognition_content_generate($node, $field) {
  *                         Formatter                           *
  ***************************************************************/
 
-function _uwpeople_recognition_theme() {
+function _dirprof_recognition_theme() {
   return array(
-    'uwpeople_formatter_recognition_link' => array(
+    'dirprof_formatter_recognition_link' => array(
       'arguments' => array('element' => NULL, ),
     ),
-    'uwpeople_formatter_recognition_plain' => array(
+    'dirprof_formatter_recognition_plain' => array(
       'arguments' => array('element' => NULL, ),
     ),
   );
 }
 
-function _uwpeople_recognition_field_formatter_info() {
+function _dirprof_recognition_field_formatter_info() {
   return array(
     'recognition_link' => array(
       'label' => t('Link'),
-      'field types' => array('uwpeople_recognition'),
+      'field types' => array('dirprof_recognition'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
     'recognition_plain' => array(
       'label' => t('Plain text'),
-      'field types' => array('uwpeople_recognition'),
+      'field types' => array('dirprof_recognition'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
   );
@@ -195,7 +195,7 @@ function _uwpeople_recognition_field_formatter_info() {
 /**
  * Theme function for 'recognition link' field formatter.
  */
-function theme_uwpeople_formatter_recognition_link($element) {
+function theme_dirprof_formatter_recognition_link($element) {
   $ret = '<div class="recognition_entry">';
   
   $ret .= '<div class="header">';
@@ -228,7 +228,7 @@ function theme_uwpeople_formatter_recognition_link($element) {
 /**
  * Theme function for 'recognition plain' field formatter.
  */
-function theme_uwpeople_formatter_recognition_plain($element) {
+function theme_dirprof_formatter_recognition_plain($element) {
   $ret = '<div class="recognition_entry_plain">';
   $ret .= '<div class="header">';
   
@@ -250,12 +250,12 @@ function theme_uwpeople_formatter_recognition_plain($element) {
   return $ret;
 }
 
-function _uwpeople_recognition_can_theme($element) {
+function _dirprof_recognition_can_theme($element) {
   return array_key_exists('recognition_title', $element['#item']);
 }
 
-function _uwpeople_recognition_default_theme($element) {
-  return theme_uwpeople_formatter_recognition_link($element);
+function _dirprof_recognition_default_theme($element) {
+  return theme_dirprof_formatter_recognition_link($element);
 }
 
 
@@ -263,11 +263,11 @@ function _uwpeople_recognition_default_theme($element) {
  *                           Widget                            *
  ***************************************************************/
 
-function _uwpeople_recognition_widget_info() {
+function _dirprof_recognition_widget_info() {
   return array(
-    'uwpeople_recognition_widget' => array(
+    'dirprof_recognition_widget' => array(
       'label' => t('Recognition Widget'),
-      'field types' => array('uwpeople_recognition'),
+      'field types' => array('dirprof_recognition'),
       'multiple values' => CONTENT_HANDLE_CORE,
       'callbacks' => array(
         'default value' => CONTENT_CALLBACK_DEFAULT,
@@ -279,7 +279,7 @@ function _uwpeople_recognition_widget_info() {
 /**
  * Implementation of hook_widget_settings().
  */
-function uwpeople_recognition_widget_settings($op, $widget) {
+function dirprof_recognition_widget_settings($op, $widget) {
   switch ($op) {
     case 'form':
       return array();
@@ -288,7 +288,7 @@ function uwpeople_recognition_widget_settings($op, $widget) {
   }
 }
 
-function _uwpeople_recognition_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+function _dirprof_recognition_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   $element = array();
   
   $element['recognition_title'] = array(

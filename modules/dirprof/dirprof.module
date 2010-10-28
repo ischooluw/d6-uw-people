@@ -1,0 +1,318 @@
+<?php
+
+/***************************************************************
+ * Directory Profile Module                                    *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+/**
+ * @file
+ * Directory Profile main module file.
+ */
+
+module_load_include('inc', 'dirprof');
+module_load_include('inc', 'dirprof', 'dirprof.admin');
+
+
+/**
+ * Implementation of hook_perm().
+ */
+function dirprof_perm() {
+  return array(DIRPROF_PERM);
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function dirprof_menu() {
+  $items = array();
+  
+  $items['admin/settings/dirprof'] = array(
+    'title' => t('Directory Profile'),
+    'description' => t('Configure Directory Profile settings.'),
+    'page callback' => '_dirprof_admin_page',
+    'access arguments' => array(DIRPROF_PERM),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+
+/***************************************************************
+ *                      UW People Hooks                        *
+ ***************************************************************/
+
+/**
+ * Implements hook_uwpeople_extend().
+ */
+function dirprof_uwpeople_extend($args) {
+  $regid = $args['regid'];
+  $nid = $args['person_nid'];
+  $netid = $args['netid'];
+  
+  if (_dirprof_has_extended($args)) {
+    if (!_dirprof_reload_extendedprof($regid, $nid))
+      _dirprof_error('Failed to load extended profile for "%var".', $netid);
+  }
+  else {
+    _dirprof_delete_extendedprof($regid);
+  }
+  
+  if (_dirprof_has_simple($args)) {
+    if (!_dirprof_reload_simpleprof($regid, $data, $node))
+      _dirprof_error('Failed to load simplified profile for "%var".', $netid);
+  }
+  else {
+    _dirprof_delete_simpleprof($regid);
+  }
+}
+
+/**
+ * Implements hook_uwpeople_delete().
+ */
+function dirprof_uwpeople_delete($args) {
+  _dirprof_delete_simpleprof($args['regid']);
+  _dirprof_delete_extendedprof($args['regid']);
+}
+
+
+/***************************************************************
+ *                          Field                              *
+ ***************************************************************/
+
+/**
+ * Implementation of hook_field_info().
+ */
+function dirprof_field_info() {
+  return array_merge(
+    _dirprof_affiliation_field_info(),
+    _dirprof_collaborator_field_info(),
+    _dirprof_membership_field_info(),
+    _dirprof_education_field_info(),
+    _dirprof_keywork_field_info(),
+    _dirprof_recognition_field_info(),
+    _dirprof_project_field_info()
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function dirprof_field_settings($op, $field) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'dirprof_affiliation':
+      return _dirprof_affiliation_field_settings($op, $field);
+    case 'dirprof_collaborator':
+      return _dirprof_collaborator_field_settings($op, $field);
+    case 'dirprof_membership':
+      return _dirprof_membership_field_settings($op, $field);
+    case 'dirprof_education':
+      return _dirprof_education_field_settings($op, $field);
+    case 'dirprof_keywork':
+      return _dirprof_keywork_field_settings($op, $field);
+    case 'dirprof_recognition':
+      return _dirprof_recognition_field_settings($op, $field);
+    case 'dirprof_project':
+      return _dirprof_project_field_settings($op, $field);
+  }
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function dirprof_field($op, &$node, $field, &$items, $teaser, $page) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'dirprof_affiliation':
+      return _dirprof_affiliation_field($op, $node, $field, $items, $teaser, $page);
+    case 'dirprof_collaborator':
+      return _dirprof_collaborator_field($op, $node, $field, $items, $teaser, $page);
+    case 'dirprof_membership':
+      return _dirprof_membership_field($op, $node, $field, $items, $teaser, $page);
+    case 'dirprof_education':
+      return _dirprof_education_field($op, $node, $field, $items, $teaser, $page);
+    case 'dirprof_keywork':
+      return _dirprof_keywork_field($op, $node, $field, $items, $teaser, $page);
+    case 'dirprof_recognition':
+      return _dirprof_recognition_field($op, $node, $field, $items, $teaser, $page);
+    case 'dirprof_project':
+      return _dirprof_project_field($op, $node, $field, $items, $teaser, $page);
+  }
+}
+
+/**
+ * Implementation of hook_content_is_empty().
+ */
+function dirprof_content_is_empty($item, $field) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'dirprof_affiliation':
+      return _dirprof_affiliation_content_is_empty($item, $field);
+    case 'dirprof_collaborator':
+      return _dirprof_collaborator_content_is_empty($item, $field);
+    case 'dirprof_membership':
+      return _dirprof_membership_content_is_empty($item, $field);
+    case 'dirprof_education':
+      return _dirprof_education_content_is_empty($item, $field);
+    case 'dirprof_keywork':
+      return _dirprof_keywork_content_is_empty($item, $field);
+    case 'dirprof_recognition':
+      return _dirprof_recognition_content_is_empty($item, $field);
+    case 'dirprof_project':
+      return _dirprof_project_content_is_empty($item, $field);
+  }
+}
+
+/**
+ * Implementation of hook_content_generate().
+ */
+function dirprof_content_generate($node, $field) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'dirprof_affiliation':
+      return _dirprof_affiliation_content_generate($node, $field);
+    case 'dirprof_collaborator':
+      return _dirprof_collaborator_content_generate($node, $field);
+    case 'dirprof_membership':
+      return _dirprof_membership_content_generate($node, $field);
+    case 'dirprof_education':
+      return _dirprof_education_content_generate($node, $field);
+    case 'dirprof_keywork':
+      return _dirprof_keywork_content_generate($node, $field);
+    case 'dirprof_recognition':
+      return _dirprof_recognition_content_generate($node, $field);
+    case 'dirprof_project':
+      return _dirprof_project_content_generate($node, $field);
+  }
+}
+
+
+/***************************************************************
+ *                         Formatter                           *
+ ***************************************************************/
+
+/**
+ * Implementation of hook_theme().
+ */
+function dirprof_theme() {
+  $default = array(
+    'dirprof_formatter_default' => array(
+      'arguments' => array('element' => NULL, ),
+    ),
+  );
+  
+  return array_merge(
+    $default,
+    _dirprof_affiliation_theme(),
+    _dirprof_collaborator_theme(),
+    _dirprof_membership_theme(),
+    _dirprof_education_theme(),
+    _dirprof_keywork_theme(),
+    _dirprof_recognition_theme(),
+    _dirprof_project_theme()
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function dirprof_field_formatter_info() {
+  $default = array(
+    'default' => array(
+      'label' => t('Default'),
+      'field types' => array(
+        'dirprof_affiliation',
+        'dirprof_collaborator',
+        'dirprof_membership',
+        'dirprof_education',
+        'dirprof_keywork',
+        'dirprof_recognition',
+        'dirprof_project',
+      ),
+      'multiple values' => CONTENT_HANDLE_CORE,
+    ),
+  );
+  
+  return array_merge(
+    $default,
+    _dirprof_affiliation_field_formatter_info(),
+    _dirprof_collaborator_field_formatter_info(),
+    _dirprof_membership_field_formatter_info(),
+    _dirprof_education_field_formatter_info(),
+    _dirprof_keywork_field_formatter_info(),
+    _dirprof_recognition_field_formatter_info(),
+    _dirprof_project_field_formatter_info()
+  );
+}
+
+/**
+ * Theme function for 'default' field formatter.
+ */
+function theme_dirprof_formatter_default($element) {
+  if (_dirprof_affiliation_can_theme($element))
+    return _dirprof_affiliation_default_theme($element);
+  else if (_dirprof_collaborator_can_theme($element))
+    return _dirprof_collaborator_default_theme($element);
+  else if (_dirprof_membership_can_theme($element))
+    return _dirprof_membership_default_theme($element);
+  else if (_dirprof_education_can_theme($element))
+    return _dirprof_education_default_theme($element);
+  else if (_dirprof_keywork_can_theme($element))
+    return _dirprof_keywork_default_theme($element);
+  else if (_dirprof_recognition_can_theme($element))
+    return _dirprof_recognition_default_theme($element);
+  else if (_dirprof_project_can_theme($element))
+    return _dirprof_project_default_theme($element);
+}
+
+
+/***************************************************************
+ *                           Widget                            *
+ ***************************************************************/
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function dirprof_widget_info() {
+  return array_merge(
+    _dirprof_affiliation_widget_info(),
+    _dirprof_collaborator_widget_info(),
+    _dirprof_membership_widget_info(),
+    _dirprof_education_widget_info(),
+    _dirprof_keywork_widget_info(),
+    _dirprof_recognition_widget_info(),
+    _dirprof_project_widget_info()
+  );
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function dirprof_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  $name = $field['type'];
+  
+  switch ($name) {
+    case 'dirprof_affiliation':
+      return _dirprof_affiliation_widget($form, $form_state, $field, $items, $delta);
+    case 'dirprof_collaborator':
+      return _dirprof_collaborator_widget($form, $form_state, $field, $items, $delta);
+    case 'dirprof_membership':
+      return _dirprof_membership_widget($form, $form_state, $field, $items, $delta);
+    case 'dirprof_education':
+      return _dirprof_education_widget($form, $form_state, $field, $items, $delta);
+    case 'dirprof_keywork':
+      return _dirprof_keywork_widget($form, $form_state, $field, $items, $delta);
+    case 'dirprof_recognition':
+      return _dirprof_recognition_widget($form, $form_state, $field, $items, $delta);
+    case 'dirprof_project':
+      return _dirprof_project_widget($form, $form_state, $field, $items, $delta);
+  }
+}

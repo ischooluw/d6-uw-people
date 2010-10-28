@@ -1,0 +1,76 @@
+<?php
+
+/***************************************************************
+ * Directory Profile Module                                    *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+module_load_include('inc', 'dirprof');
+
+/**
+ * @file
+ * dirprof install.
+ */
+
+/**
+ * Implementation of hook_requirements().
+ */
+function dirprof_requirements($phase) {
+  return easycck_verify_requirements($phase, 'dirprof');
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function dirprof_install() {
+  $timeout = ini_get('max_execution_time');
+  ini_set('max_execution_time', 0);
+  
+  drupal_load('module', 'content');
+  content_notify('install', 'dirprof');
+  
+  ini_set('max_execution_time', $timeout);
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function dirprof_uninstall() {
+  variable_del(DIRPROF_SIMPLEPROF);
+  variable_del(DIRPROF_EXTENDEDPROF);
+  variable_del(DIRPROF_PERM);
+  
+  easycck_delete_type('simpleprof');
+  easycck_delete_type('extendedprof');
+  
+  drupal_load('module', 'content');
+  content_notify('enable', 'dirprof');
+  content_notify('uninstall', 'dirprof');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function dirprof_enable() {
+  $timeout = ini_get('max_execution_time');
+  ini_set('max_execution_time', 0);
+  
+  drupal_load('module', 'content');
+  content_notify('enable', 'dirprof');
+  
+  $path = drupal_get_path('module', 'dirprof') . '/';
+  easycck_install_type($path . 'simpleprof.def', 'simpleprof');
+  easycck_install_type($path . 'extendedprof.def', 'extendedprof');
+  
+  ini_set('max_execution_time', $timeout);
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function dirprof_disable() {
+  drupal_load('module', 'content');
+  content_notify('disable', 'dirprof');
+}
