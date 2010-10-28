@@ -1,7 +1,7 @@
 <?php
 
 /***************************************************************
- * UW People Module                                            *
+ * Directory Profile Module                                    *
  *                                                             *
  * Created by the University of Washington Information School. *
  * Be sure to read README and LICENSE.                         *
@@ -17,17 +17,17 @@
  *                          Field                              *
  ***************************************************************/
 
-function _uwpeople_affiliation_field_info() {
+function _dirprof_affiliation_field_info() {
   return array(
-    'uwpeople_affiliation' => array(
+    'dirprof_affiliation' => array(
       'label' => t('Affiliation'),
-      'description' => t('An affiliation for an individual - defined by the UW People module.'),
+      'description' => t('An affiliation for an individual - defined by the Directory Profile module.'),
       'content_icon' => 'icon_content_text.png',
     ),
   );
 }
 
-function _uwpeople_affiliation_field_settings($op, $field) {
+function _dirprof_affiliation_field_settings($op, $field) {
   switch ($op) {
     case 'form':
       return array();
@@ -65,7 +65,7 @@ function _uwpeople_affiliation_field_settings($op, $field) {
   }
 }
 
-function _uwpeople_affiliation_field($op, &$node, $field, &$items, $teaser, $page) {
+function _dirprof_affiliation_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
     case 'validate':
       if (is_array($items) && !empty($items)) {
@@ -76,7 +76,7 @@ function _uwpeople_affiliation_field($op, &$node, $field, &$items, $teaser, $pag
             unset($item['_error_element']);
           }
           
-          if (_uwpeople_affiliation_content_is_empty($item, $field))
+          if (_dirprof_affiliation_content_is_empty($item, $field))
             continue;
           
           if (empty($item['affiliation'])) {
@@ -100,11 +100,11 @@ function _uwpeople_affiliation_field($op, &$node, $field, &$items, $teaser, $pag
   }
 }
 
-function _uwpeople_affiliation_content_is_empty($item, $field) {
+function _dirprof_affiliation_content_is_empty($item, $field) {
   return empty($item['affiliation']) && empty($item['affiliation_link']);
 }
 
-function _uwpeople_affiliation_content_generate($node, $field) {
+function _dirprof_affiliation_content_generate($node, $field) {
   $node_field = array();
   $node_field['affiliation'] = 'Affiliation ' . rand(0, 99999);
   $node_field['affiliation_link'] = 'http://www.google.com';
@@ -117,27 +117,27 @@ function _uwpeople_affiliation_content_generate($node, $field) {
  *                         Formatter                           *
  ***************************************************************/
 
-function _uwpeople_affiliation_theme() {
+function _dirprof_affiliation_theme() {
   return array(
-    'uwpeople_formatter_affiliate_link' => array(
+    'dirprof_formatter_affiliate_link' => array(
       'arguments' => array('element' => NULL, ),
     ),
-    'uwpeople_formatter_affiliate_plain' => array(
+    'dirprof_formatter_affiliate_plain' => array(
       'arguments' => array('element' => NULL, ),
     ),
   );
 }
 
-function _uwpeople_affiliation_field_formatter_info() {
+function _dirprof_affiliation_field_formatter_info() {
   return array(
     'affiliate_link' => array(
       'label' => t('Link'),
-      'field types' => array('uwpeople_affiliation'),
+      'field types' => array('dirprof_affiliation'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
     'affiliate_plain' => array(
       'label' => t('Plain text'),
-      'field types' => array('uwpeople_affiliation'),
+      'field types' => array('dirprof_affiliation'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
   );
@@ -146,7 +146,7 @@ function _uwpeople_affiliation_field_formatter_info() {
 /**
  * Theme function for 'affiliate link' field formatter.
  */
-function theme_uwpeople_formatter_affiliate_link($element) {
+function theme_dirprof_formatter_affiliate_link($element) {
   if (!empty($element['#item']['affiliation_link']))
     return '<div class="affliation_entry">' . l($element['#item']['affiliation'], $element['#item']['affiliation_link']) . '</div>';
   return '<div class="affliation_entry">' . $element['#item']['affiliation_safe'] . '</div>';
@@ -155,16 +155,16 @@ function theme_uwpeople_formatter_affiliate_link($element) {
 /**
  * Theme function for 'affiliate plain' field formatter.
  */
-function theme_uwpeople_formatter_affiliate_plain($element) {
+function theme_dirprof_formatter_affiliate_plain($element) {
   return '<div class="affiliation_entry_plain">' . $element['#item']['affiliation_safe'] . ', ' . $element['#item']['affiliation_link_safe'] . '</div>';
 }
 
-function _uwpeople_affiliation_can_theme($element) {
+function _dirprof_affiliation_can_theme($element) {
   return array_key_exists('affiliation', $element['#item']);
 }
 
-function _uwpeople_affiliation_default_theme($element) {
-  return theme_uwpeople_formatter_affiliate_link($element);
+function _dirprof_affiliation_default_theme($element) {
+  return theme_dirprof_formatter_affiliate_link($element);
 }
 
 
@@ -172,11 +172,11 @@ function _uwpeople_affiliation_default_theme($element) {
  *                           Widget                            *
  ***************************************************************/
 
-function _uwpeople_affiliation_widget_info() {
+function _dirprof_affiliation_widget_info() {
   return array(
-    'uwpeople_affiliation_widget' => array(
+    'dirprof_affiliation_widget' => array(
       'label' => t('Affiliation Widget'),
-      'field types' => array('uwpeople_affiliation'),
+      'field types' => array('dirprof_affiliation'),
       'multiple values' => CONTENT_HANDLE_CORE,
       'callbacks' => array(
         'default value' => CONTENT_CALLBACK_DEFAULT,
@@ -188,7 +188,7 @@ function _uwpeople_affiliation_widget_info() {
 /**
  * Implementation of hook_widget_settings().
  */
-function uwpeople_affiliation_widget_settings($op, $widget) {
+function dirprof_affiliation_widget_settings($op, $widget) {
   switch ($op) {
     case 'form':
       return array();
@@ -197,7 +197,7 @@ function uwpeople_affiliation_widget_settings($op, $widget) {
   }
 }
 
-function _uwpeople_affiliation_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+function _dirprof_affiliation_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   $element = array();
   
   $element['affiliation'] = array(

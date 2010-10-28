@@ -1,7 +1,7 @@
 <?php
 
 /***************************************************************
- * UW People Module                                            *
+ * Directory Profile Module                                    *
  *                                                             *
  * Created by the University of Washington Information School. *
  * Be sure to read README and LICENSE.                         *
@@ -17,17 +17,17 @@
  *                          Field                              *
  ***************************************************************/
 
-function _uwpeople_membership_field_info() {
+function _dirprof_membership_field_info() {
   return array(
-    'uwpeople_membership' => array(
+    'dirprof_membership' => array(
       'label' => t('Membership'),
-      'description' => t('A membership for an individual - defined by the UW People module.'),
+      'description' => t('A membership for an individual - defined by the Directory Profile module.'),
       'content_icon' => 'icon_content_text.png',
     ),
   );
 }
 
-function _uwpeople_membership_field_settings($op, $field) {
+function _dirprof_membership_field_settings($op, $field) {
   switch ($op) {
     case 'form':
       return array();
@@ -65,7 +65,7 @@ function _uwpeople_membership_field_settings($op, $field) {
   }
 }
 
-function _uwpeople_membership_field($op, &$node, $field, &$items, $teaser, $page) {
+function _dirprof_membership_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
     case 'validate':
       if (is_array($items) && !empty($items)) {
@@ -76,7 +76,7 @@ function _uwpeople_membership_field($op, &$node, $field, &$items, $teaser, $page
             unset($item['_error_element']);
           }
           
-          if (_uwpeople_membership_content_is_empty($item, $field))
+          if (_dirprof_membership_content_is_empty($item, $field))
             continue;
           
           if (empty($item['membership_organization'])) {
@@ -100,11 +100,11 @@ function _uwpeople_membership_field($op, &$node, $field, &$items, $teaser, $page
   }
 }
 
-function _uwpeople_membership_content_is_empty($item, $field) {
+function _dirprof_membership_content_is_empty($item, $field) {
   return empty($item['membership_organization']) && empty($item['membership_link']);
 }
 
-function _uwpeople_membership_content_generate($node, $field) {
+function _dirprof_membership_content_generate($node, $field) {
   $node_field = array();
   $node_field['membership_organization'] = 'Organization ' . rand(0, 99999);
   $node_field['membership_link'] = 'http://www.google.com';
@@ -117,27 +117,27 @@ function _uwpeople_membership_content_generate($node, $field) {
  *                         Formatter                           *
  ***************************************************************/
 
-function _uwpeople_membership_theme() {
+function _dirprof_membership_theme() {
   return array(
-    'uwpeople_formatter_membership_link' => array(
+    'dirprof_formatter_membership_link' => array(
       'arguments' => array('element' => NULL, ),
     ),
-    'uwpeople_formatter_membership_plain' => array(
+    'dirprof_formatter_membership_plain' => array(
       'arguments' => array('element' => NULL, ),
     ),
   );
 }
 
-function _uwpeople_membership_field_formatter_info() {
+function _dirprof_membership_field_formatter_info() {
   return array(
     'membership_link' => array(
       'label' => t('Link'),
-      'field types' => array('uwpeople_membership'),
+      'field types' => array('dirprof_membership'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
     'membership_plain' => array(
       'label' => t('Plain text'),
-      'field types' => array('uwpeople_membership'),
+      'field types' => array('dirprof_membership'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
   );
@@ -146,7 +146,7 @@ function _uwpeople_membership_field_formatter_info() {
 /**
  * Theme function for 'membership link' field formatter.
  */
-function theme_uwpeople_formatter_membership_link($element) {
+function theme_dirprof_formatter_membership_link($element) {
   if (!empty($element['#item']['membership_link']))
     return '<div class="membership_entry">' . l($element['#item']['membership_organization'], $element['#item']['membership_link']) . '</div>';
   return '<div class="membership_entry">' . $element['#item']['membership_organization_safe'] . '</div>';
@@ -155,16 +155,16 @@ function theme_uwpeople_formatter_membership_link($element) {
 /**
  * Theme function for 'membership plain' field formatter.
  */
-function theme_uwpeople_formatter_membership_plain($element) {
+function theme_dirprof_formatter_membership_plain($element) {
   return '<div class="membership_entry_plain">' . $element['#item']['membership_organization_safe'] . ', ' . $element['#item']['membership_link_safe'] . '</div>';
 }
 
-function _uwpeople_membership_can_theme($element) {
+function _dirprof_membership_can_theme($element) {
   return array_key_exists('membership_organization', $element['#item']);
 }
 
-function _uwpeople_membership_default_theme($element) {
-  return theme_uwpeople_formatter_membership_link($element);
+function _dirprof_membership_default_theme($element) {
+  return theme_dirprof_formatter_membership_link($element);
 }
 
 
@@ -172,11 +172,11 @@ function _uwpeople_membership_default_theme($element) {
  *                           Widget                            *
  ***************************************************************/
 
-function _uwpeople_membership_widget_info() {
+function _dirprof_membership_widget_info() {
   return array(
-    'uwpeople_membership_widget' => array(
+    'dirprof_membership_widget' => array(
       'label' => t('Membership Widget'),
-      'field types' => array('uwpeople_membership'),
+      'field types' => array('dirprof_membership'),
       'multiple values' => CONTENT_HANDLE_CORE,
       'callbacks' => array(
         'default value' => CONTENT_CALLBACK_DEFAULT,
@@ -188,7 +188,7 @@ function _uwpeople_membership_widget_info() {
 /**
  * Implementation of hook_widget_settings().
  */
-function uwpeople_membership_widget_settings($op, $widget) {
+function dirprof_membership_widget_settings($op, $widget) {
   switch ($op) {
     case 'form':
       return array();
@@ -197,7 +197,7 @@ function uwpeople_membership_widget_settings($op, $widget) {
   }
 }
 
-function _uwpeople_membership_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+function _dirprof_membership_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   $element = array();
   
   $element['membership_organization'] = array(

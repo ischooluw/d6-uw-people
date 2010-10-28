@@ -1,0 +1,76 @@
+<?php
+
+/***************************************************************
+ * iPeople Module                                              *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+/**
+ * @file
+ * iPeople main module file.
+ */
+
+module_load_include('inc', 'ipeople');
+module_load_include('inc', 'ipeople', 'ipeople.admin');
+
+
+/**
+ * Implementation of hook_perm().
+ */
+function ipeople_perm() {
+  return array(IPEOPLE_PERM);
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function ipeople_menu() {
+  $items = array();
+  
+  $items['admin/settings/ipeople'] = array(
+    'title' => t('iPeople'),
+    'description' => t('Configure iPeople settings.'),
+    'page callback' => '_ipeople_admin_page',
+    'access arguments' => array(IPEOPLE_PERM),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+
+/***************************************************************
+ *                      UW People Hooks                        *
+ ***************************************************************/
+
+/**
+ * Implements hook_uwpeople_extend().
+ */
+function ipeople_uwpeople_extend($args) {
+  $regid = $args['regid'];
+  $nid = $args['person_nid'];
+  $netid = $args['netid'];
+  $roles = isset($args['roles']) ? $args['roles'] : NULL;
+  
+  if (empty($roles)) {
+    _ipeople_error('No roles for "%var"', $netid);
+    return;
+  }
+  
+  if ($args['directories']['student']) {
+    if (!_ipeople_reload_istudent($regid, $nid, $roles))
+      _ipeople_error('Failed to load iStudent node for "%var".', $netid);
+  }
+  else {
+    _ipeople_delete_istudent($regid);
+  }
+}
+
+/**
+ * Implements hook_uwpeople_delete().
+ */
+function ipeople_uwpeople_delete($args) {
+  _ipeople_delete_istudent($args['regid']);
+}

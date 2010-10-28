@@ -15,13 +15,6 @@
 module_load_include('inc', 'lts', 'lts.api');
 module_load_include('inc', 'easycck');
 
-module_load_include('inc', 'uwpeople', 'uwpeople_affiliation_field');
-module_load_include('inc', 'uwpeople', 'uwpeople_collaborator_field');
-module_load_include('inc', 'uwpeople', 'uwpeople_education_field');
-module_load_include('inc', 'uwpeople', 'uwpeople_keywork_field');
-module_load_include('inc', 'uwpeople', 'uwpeople_membership_field');
-module_load_include('inc', 'uwpeople', 'uwpeople_project_field');
-module_load_include('inc', 'uwpeople', 'uwpeople_recognition_field');
 
 define('UWPEOPLE_ALL_PEOPLE_ROLE', 'UWPEOPLE_ALL_PEOPLE_ROLE');
 define('UWPEOPLE_ALL_PEOPLE_ROLE_DEFAULT', '');
@@ -45,6 +38,8 @@ define('UWPEOPLE_PHD_ROLES', 'UWPEOPLE_PHD_ROLES');
 define('UWPEOPLE_PHD_ROLES_DEFAULT', '');
 
 define('UWPEOPLE_PERM', 'manage uw people');
+define('UWPEOPLE_CRON_PERM', 'execute uw people cron');
+
 
 /**
  * Gets or sets a uwpeople module variable.
@@ -263,50 +258,15 @@ function _uwpeople_node_load($type, $title) {
 }
 
 /**
- * Reload simplified profile.
- */
-function _uwpeople_reload_simpleprof($regid, $data, &$node) {
-  $prof = _uwpeople_node_load('simpleprof', $regid);
-  
-  if (!$prof) {
-    $prof = easycck_node_create('simpleprof', $regid);
-    
-    if (!easycck_node_save($prof))
-      return FALSE;
-  }
-  
-  easycck_set_noderef_field($node, 'field_person_simpleprof', $prof);
-  
-  return TRUE;
-}
-
-/**
- * Reload extended profile.
- */
-function _uwpeople_reload_extendedprof($regid, $data, &$node) {
-  $prof = _uwpeople_node_load('extendedprof', $regid);
-  
-  if (!$prof) {
-    $prof = easycck_node_create('extendedprof', $regid);
-    
-    if (!easycck_node_save($prof))
-      return FALSE;
-  }
-  
-  easycck_set_noderef_field($node, 'field_person_extendedprof', $prof);
-  
-  return TRUE;
-}
-
-/**
  * Reload employee data.
  */
-function _uwpeople_reload_employee($regid, $data, &$node) {
+function _uwpeople_reload_employee($regid, $data, &$node, &$nid) {
   if (empty($data['employee']))
     return FALSE;
   
   $employee = $data['employee'];
   $prof = _uwpeople_node_load('employee', $regid);
+  $netid = $data['person']['uwnetid'];
   
   if (!$prof) {
     $prof = easycck_node_create('employee', $regid);
@@ -324,20 +284,25 @@ function _uwpeople_reload_employee($regid, $data, &$node) {
   easycck_set_text_field($prof, 'field_employee_address1_ws', $employee['address_1']);
   easycck_set_text_field($prof, 'field_employee_address2_ws', $employee['address_2']);
   
-  easycck_set_noderef_field($node, 'field_person_employee', $prof);
+  if (!easycck_node_save($prof))
+    return FALSE;
   
-  return easycck_node_save($prof);
+  easycck_set_noderef_field($node, 'field_person_employee', $prof);
+  $nid = $prof->nid;
+  
+  return TRUE;
 }
 
 /**
  * Reload student data.
  */
-function _uwpeople_reload_student($regid, $data, &$node) {
+function _uwpeople_reload_student($regid, $data, &$node, &$nid) {
   if (empty($data['student']))
     return FALSE;
   
   $student = $data['student'];
   $prof = _uwpeople_node_load('student', $regid);
+  $netid = $data['person']['uwnetid'];
   
   if (!$prof) {
     $prof = easycck_node_create('student', $regid);
@@ -351,9 +316,13 @@ function _uwpeople_reload_student($regid, $data, &$node) {
   easycck_set_text_field($prof, 'field_student_department2', $student['department_2']);
   easycck_set_text_field($prof, 'field_student_department3', $student['department_3']);
   
-  easycck_set_noderef_field($node, 'field_person_student', $prof);
+  if (!easycck_node_save($prof))
+    return FALSE;
   
-  return easycck_node_save($prof);
+  easycck_set_noderef_field($node, 'field_person_student', $prof);
+  $nid = $prof->nid;
+  
+  return TRUE;
 }
 
 /**
@@ -374,26 +343,6 @@ function _uwpeople_delete_student($regid) {
   
   if ($student)
     easycck_node_delete(db_result($student));
-}
-
-/**
- * Deletes "simpleprof" data for an individual.
- */
-function _uwpeople_delete_simpleprof($regid) {
-  $extended = db_query("SELECT nid FROM {node} WHERE type = 'extendedprof' AND title = '%s'", $regid);
-  
-  if ($extended)
-    easycck_node_delete(db_result($extended));
-}
-
-/**
- * Deletes "extendedprof" data for an individual.
- */
-function _uwpeople_delete_extendedprof($regid) {
-  $simple = db_query("SELECT nid FROM {node} WHERE type = 'simpleprof' AND title = '%s'", $regid);
-  
-  if ($simple)
-    easycck_node_delete(db_result($simple));
 }
 
 /**
@@ -421,12 +370,18 @@ function _uwpeople_reload_person($netid) {
   
   if (!$node) {
     $node = easycck_node_create('person', $regid);
+    
+    if (!$node) {
+      _uwpeople_error('Could not create person node for "%var"', $netid);
+      return FALSE;
+    }
+    
     easycck_set_int_field($node, 'field_person_firstmiddle_use', 0);
     easycck_set_int_field($node, 'field_person_last_use', 0);
     easycck_set_int_field($node, 'field_person_publish', $person['publish_in_whitepages'] ? 1 : 0);
   }
   
-  easycck_set_text_field($node, 'field_person_netid', $person['uwnetid']);
+  easycck_set_text_field($node, 'field_person_netid', $netid);
   easycck_set_text_field($node, 'field_person_firstmiddle_ws', $person['registered_first_middle_name']);
   easycck_set_text_field($node, 'field_person_last_ws', $person['registered_surname']);
   
@@ -436,74 +391,102 @@ function _uwpeople_reload_person($netid) {
   $phd = _uwpeople_in_setting('phd', $roles, $settings);
   $researcher = _uwpeople_in_setting('researchers', $roles, $settings);
   
+  // start building hook args
+  $args = array(
+    'regid' => $regid,
+    'netid' => $netid,
+    'roles' => $roles,
+    'person' => $data['person'],
+    'directories' => array(
+      'student' => FALSE,
+      'phd' => FALSE,
+      'researcher' => FALSE,
+      'staff' => FALSE,
+      'faculty' => FALSE,
+    ),
+  );
+  
   if (!$faculty && !$staff && !$student && !$phd && !$researcher) {
     easycck_set_int_field($node, 'field_person_directory', 0, FALSE);
   }
   else {
     $dirs = array();
+    $emp_nid = FALSE;
+    $stu_nid = FALSE;
     
+    // reload or clean employee data if needed
     if ($faculty || $staff || $researcher) {
-      if (!_uwpeople_reload_employee($regid, $data, $node)) {
+      if (!_uwpeople_reload_employee($regid, $data, $node, $emp_nid)) {
         _uwpeople_error('Failed to load employee data for "%var".', $netid);
         return FALSE;
       }
     }
     else {
       _uwpeople_delete_employee($regid);
+      easycck_set_noderef_field($node, 'field_person_employee', NULL);
     }
     
-    if ($faculty || $phd || $researcher) {
-      if (!_uwpeople_reload_extendedprof($regid, $data, $node)) {
-        _uwpeople_error('Failed to load extended profile for "%var".', $netid);
-        return FALSE;
-      }
-    }
-    else {
-      _uwpeople_delete_extendedprof($regid);
-    }
-    
-    if ($staff) {
-      if (!_uwpeople_reload_simpleprof($regid, $data, $node)) {
-        _uwpeople_error('Failed to load simple profile for "%var".', $netid);
-        return FALSE;
-      }
-    }
-    else {
-      _uwpeople_delete_simpleprof($regid);
-    }
-    
+    // reload or clean student data if needed
     if ($student || $phd) {
-      if (!_uwpeople_reload_student($regid, $data, $node)) {
+      if (!_uwpeople_reload_student($regid, $data, $node, $stu_nid)) {
         _uwpeople_error('Failed to load student data for "%var".', $netid);
         return FALSE;
       }
     }
     else {
       _uwpeople_delete_student($regid);
+      easycck_set_noderef_field($node, 'field_person_student', NULL);
     }
     
-    if ($faculty)
+    // continue building hook args
+    $args = array_merge($args, array(
+      'person_nid' => FALSE,
+      'employee' => empty($data['employee']) ? NULL : $data['employee'],
+      'employee_nid' => $emp_nid,
+      'student' => empty($data['student']) ? NULL : $data['student'],
+      'student_nid' => $stu_nid,
+    ));
+    
+    // build directory values
+    if ($faculty) {
       $dirs[] = 1;
+      $args['directories']['faculty'] = TRUE;
+    }
     
-    if ($staff)
+    if ($staff) {
       $dirs[] = 2;
+      $args['directories']['staff'] = TRUE;
+    }
     
-    if ($phd)
+    if ($phd) {
       $dirs[] = 3;
+      $args['directories']['phd'] = TRUE;
+    }
     
-    if ($researcher)
+    if ($researcher) {
       $dirs[] = 4;
+      $args['directories']['researcher'] = TRUE;
+    }
     
-    if ($student)
+    if ($student) {
       $dirs[] = 5;
+      $args['directories']['student'] = TRUE;
+    }
     
+    // set directory fields
     easycck_set_int_field($node, 'field_person_directory', $dirs[0], FALSE);
     
     for ($i = 1; $i < count($dirs); ++$i)
       easycck_set_int_field($node, 'field_person_directory', $dirs[$i], TRUE);
   }
   
-  return easycck_node_save($node);
+  if (!easycck_node_save($node))
+    return FALSE;
+  
+  $args['person_nid'] = $node->nid;
+  module_invoke_all('uwpeople_extend', $args);
+  
+  return TRUE;
 }
 
 /**
@@ -540,9 +523,13 @@ function _uwpeople_delete($nid, $data) {
   
   _uwpeople_delete_employee($regid);
   _uwpeople_delete_student($regid);
-  _uwpeople_delete_simpleprof($regid);
-  _uwpeople_delete_extendedprof($regid);
   
+  $args = array(
+    'regid' => $regid,
+    'person_nid' => $nid,
+  );
+  
+  module_invoke_all('uwpeople_delete', $args);
   easycck_node_delete($nid);
 }
 
@@ -551,6 +538,9 @@ function _uwpeople_delete($nid, $data) {
  */
 function _uwpeople_cleanup($netids) {
   $current = _uwpeople_get_current();
+  
+  if (!$current)
+    return FALSE;
   
   foreach ($current as $nid => $data) {
     if (!in_array($data['netid'], $netids))
@@ -581,7 +571,11 @@ function _uwpeople_reload_all() {
     return FALSE;
   }
   
-  _uwpeople_cleanup($netids);
+  if (!_uwpeople_cleanup($netids)) {
+    _uwpeople_error('Failed to clean.');
+    _uwpeople_unlock($lock);
+    return FALSE;
+  }
   
   $timeout = ini_get('max_execution_time');
   ini_set('max_execution_time', 0);

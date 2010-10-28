@@ -26,7 +26,7 @@ function _uwpeople_admin_form($form_state) {
   );
   
   $form['grouping']['reminder'] = array(
-    '#value' => '<p>' . t('NOTE: LTS caches responses from the UW GWS. If new data is not pulled try clearing the LTS cache.  Also note that members are fetched using LTS not Drupal roles.') . '</p>',
+    '#value' => '<p>' . t('NOTE: LTS caches data. If new data is not pulled try clearing the LTS cache.  Also note that members are fetched using LTS not Drupal roles.') . '</p>',
   );
   
   $form['grouping']['allpeople'] = array(
@@ -123,7 +123,7 @@ function _uwpeople_admin_form_submit($form, &$form_state) {
     _uwpeople_var(UWPEOPLE_STUDENT_ROLES, $form_state['values']['grouping']['student']);
     _uwpeople_var(UWPEOPLE_RESEARCHER_ROLES, $form_state['values']['grouping']['researcher']);
     _uwpeople_var(UWPEOPLE_PHD_ROLES, $form_state['values']['grouping']['phd']);
-    variable_set('uwpeople_ajax_cancel', 'TRUE');
+    
     drupal_set_message(t('Settings have been saved.'));
   }
   else if ($op == t('Reload People')) {
@@ -148,4 +148,3 @@ function _uwpeople_admin_page() {
   
   return drupal_get_form('_uwpeople_admin_form');
 }
-

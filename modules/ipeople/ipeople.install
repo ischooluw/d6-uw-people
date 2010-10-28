@@ -1,0 +1,60 @@
+<?php
+
+/***************************************************************
+ * iPeople Module                                              *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+module_load_include('inc', 'ipeople');
+
+/**
+ * @file
+ * ipeople install.
+ */
+
+/**
+ * Implementation of hook_requirements().
+ */
+function ipeople_requirements($phase) {
+  return easycck_verify_requirements($phase, 'ipeople');
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function ipeople_install() {
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function ipeople_uninstall() {
+  variable_del(IPEOPLE_STUDENT_INSC_GROUPS);
+  variable_del(IPEOPLE_STUDENT_MSIM_GROUPS);
+  variable_del(IPEOPLE_STUDENT_MLIS_GROUPS);
+  variable_del(IPEOPLE_STUDENT_INFO_GROUPS);
+  variable_del(IPEOPLE_PERM);
+  
+  easycck_delete_type('istudent');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function ipeople_enable() {
+  $timeout = ini_get('max_execution_time');
+  ini_set('max_execution_time', 0);
+  
+  $path = drupal_get_path('module', 'ipeople') . '/';
+  easycck_install_type($path . 'istudent.def', 'istudent');
+  
+  ini_set('max_execution_time', $timeout);
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function ipeople_disable() {
+}

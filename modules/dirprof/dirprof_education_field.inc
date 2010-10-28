@@ -1,7 +1,7 @@
 <?php
 
 /***************************************************************
- * UW People Module                                            *
+ * Directory Profile Module                                    *
  *                                                             *
  * Created by the University of Washington Information School. *
  * Be sure to read README and LICENSE.                         *
@@ -17,17 +17,17 @@
  *                          Field                              *
  ***************************************************************/
 
-function _uwpeople_education_field_info() {
+function _dirprof_education_field_info() {
   return array(
-    'uwpeople_education' => array(
+    'dirprof_education' => array(
       'label' => t('Education'),
-      'description' => t('An education entry for an individual - defined by the UW People module.'),
+      'description' => t('An education entry for an individual - defined by the Directory Profile module.'),
       'content_icon' => 'icon_content_text.png',
     ),
   );
 }
 
-function _uwpeople_education_field_settings($op, $field) {
+function _dirprof_education_field_settings($op, $field) {
   switch ($op) {
     case 'form':
       return array();
@@ -83,7 +83,7 @@ function _uwpeople_education_field_settings($op, $field) {
   }
 }
 
-function _uwpeople_education_field($op, &$node, $field, &$items, $teaser, $page) {
+function _dirprof_education_field($op, &$node, $field, &$items, $teaser, $page) {
   switch ($op) {
     case 'validate':
       if (is_array($items) && !empty($items)) {
@@ -94,7 +94,7 @@ function _uwpeople_education_field($op, &$node, $field, &$items, $teaser, $page)
             unset($item['_error_element']);
           }
           
-          if (_uwpeople_education_content_is_empty($item, $field))
+          if (_dirprof_education_content_is_empty($item, $field))
             continue;
           
           if (empty($item['education_degree']) ||
@@ -127,11 +127,11 @@ function _uwpeople_education_field($op, &$node, $field, &$items, $teaser, $page)
   }
 }
 
-function _uwpeople_education_content_is_empty($item, $field) {
+function _dirprof_education_content_is_empty($item, $field) {
   return empty($item['education_degree']) && empty($item['education_year']) && empty($item['education_institution']) && empty($item['education_concentration']);
 }
 
-function _uwpeople_education_content_generate($node, $field) {
+function _dirprof_education_content_generate($node, $field) {
   $node_field = array();
   $node_field['education_degree'] = rand(0, 1) == 0 ? 'Ph.D.' : 'M.S.';
   $node_field['education_year'] = '' . rand(1964, 2009);
@@ -146,19 +146,19 @@ function _uwpeople_education_content_generate($node, $field) {
  *                         Formatter                           *
  ***************************************************************/
 
-function _uwpeople_education_theme() {
+function _dirprof_education_theme() {
   return array(
-    'uwpeople_formatter_education_plain' => array(
+    'dirprof_formatter_education_plain' => array(
       'arguments' => array('element' => NULL, ),
     ),
   );
 }
 
-function _uwpeople_education_field_formatter_info() {
+function _dirprof_education_field_formatter_info() {
   return array(
     'education_plain' => array(
       'label' => t('Plain text'),
-      'field types' => array('uwpeople_education'),
+      'field types' => array('dirprof_education'),
       'multiple values' => CONTENT_HANDLE_CORE,
     ),
   );
@@ -167,7 +167,7 @@ function _uwpeople_education_field_formatter_info() {
 /**
  * Theme function for 'education plain' field formatter.
  */
-function theme_uwpeople_formatter_education_plain($element) {
+function theme_dirprof_formatter_education_plain($element) {
   $ret = '<div class="education_entry">';
   
   $ret .= $element['#item']['education_degree_safe'];
@@ -182,12 +182,12 @@ function theme_uwpeople_formatter_education_plain($element) {
   return $ret;
 }
 
-function _uwpeople_education_can_theme($element) {
+function _dirprof_education_can_theme($element) {
   return array_key_exists('education_degree', $element['#item']);
 }
 
-function _uwpeople_education_default_theme($element) {
-  return theme_uwpeople_formatter_education_plain($element);
+function _dirprof_education_default_theme($element) {
+  return theme_dirprof_formatter_education_plain($element);
 }
 
 
@@ -195,11 +195,11 @@ function _uwpeople_education_default_theme($element) {
  *                           Widget                            *
  ***************************************************************/
 
-function _uwpeople_education_widget_info() {
+function _dirprof_education_widget_info() {
   return array(
-    'uwpeople_education_widget' => array(
+    'dirprof_education_widget' => array(
       'label' => t('Education Widget'),
-      'field types' => array('uwpeople_education'),
+      'field types' => array('dirprof_education'),
       'multiple values' => CONTENT_HANDLE_CORE,
       'callbacks' => array(
         'default value' => CONTENT_CALLBACK_DEFAULT,
@@ -211,7 +211,7 @@ function _uwpeople_education_widget_info() {
 /**
  * Implementation of hook_widget_settings().
  */
-function uwpeople_education_widget_settings($op, $widget) {
+function dirprof_education_widget_settings($op, $widget) {
   switch ($op) {
     case 'form':
       return array();
@@ -220,7 +220,7 @@ function uwpeople_education_widget_settings($op, $widget) {
   }
 }
 
-function _uwpeople_education_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+function _dirprof_education_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   $element = array();
   
   $element['education_degree'] = array(

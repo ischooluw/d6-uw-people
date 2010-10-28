@@ -1,0 +1,73 @@
+<?php
+
+/***************************************************************
+ * UW People Module                                            *
+ *                                                             *
+ * Created by the University of Washington Information School. *
+ * Be sure to read README and LICENSE.                         *
+ ***************************************************************/
+
+/**
+ * @file
+ * UW People main module file.
+ */
+
+module_load_include('inc', 'uwpeople');
+module_load_include('inc', 'uwpeople', 'uwpeople.admin');
+module_load_include('inc', 'uwpeople', 'uwpeople.ajax');
+
+/**
+ * Implementation of hook_perm().
+ */
+function uwpeople_perm() {
+  return array(UWPEOPLE_PERM, UWPEOPLE_CRON_PERM,);
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function uwpeople_menu() {
+  $items = array();
+  
+  $items['admin/settings/uwpeople'] = array(
+    'title' => t('UW People'),
+    'description' => t('Configure UW People settings.'),
+    'page callback' => '_uwpeople_admin_page',
+    'access arguments' => array(UWPEOPLE_PERM),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  $items['admin/uwpeople/refresh'] = array(
+    'title' => t('UW People Refresh'),
+    'description' => t('Refresh people data.'),
+    'page callback' => '_uwpeople_refresh_page',
+    'access arguments' => array(UWPEOPLE_PERM),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['admin/uwpeople/ajax'] = array(
+    'title' => t('UW People AJAX'),
+    'description' => t('UW People AJAX interface.'),
+    'page callback' => '_uwpeople_ajax_page',
+    'access arguments' => array(UWPEOPLE_PERM),
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['uwpeople/cron'] = array(
+    'title' => t('UW People CRON'),
+    'description' => t('UW People CRON page.'),
+    'page callback' => '_uwpeople_page_cron',
+    'access arguments' => array(UWPEOPLE_CRON_PERM),
+    'type' => MENU_CALLBACK,
+  );
+  
+  return $items;
+}
+
+/**
+ * CRON callback.
+ */
+function _uwpeople_page_cron() {
+  if (user_access(UWPEOPLE_CRON_PERM))
+    _uwpeople_reload_all();
+}
