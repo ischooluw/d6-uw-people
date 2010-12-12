@@ -29,6 +29,12 @@ define('IPEOPLE_STUDENT_INFO_GROUPS_DEFAULT', '');
 
 define('IPEOPLE_PERM', 'change ipeople settings');
 
+define('IPEOPLE_INFO', 0);
+define('IPEOPLE_MSIM', 1);
+define('IPEOPLE_MLIS', 2);
+define('IPEOPLE_INSC', 3);
+define('IPEOPLE_NONE', 4);
+
 
 /**
  * Gets or sets a uwpeople module variable.
@@ -121,29 +127,29 @@ function _ipeople_reload_istudent($regid, $nid, $roles) {
   
   $settings = _ipeople_setting_roles(IPEOPLE_STUDENT_INSC_GROUPS);
   if (_ipeople_in_roles($roles, $settings)) {
-    easycck_set_int_field($prof, 'field_istudent_program', 0);
+    easycck_set_int_field($prof, 'field_istudent_program', IPEOPLE_INSC);
     return easycck_node_save($prof);
   }
   
   $settings = _ipeople_setting_roles(IPEOPLE_STUDENT_MSIM_GROUPS);
   if (_ipeople_in_roles($roles, $settings)) {
-    easycck_set_int_field($prof, 'field_istudent_program', 1);
+    easycck_set_int_field($prof, 'field_istudent_program', IPEOPLE_MSIM);
     return easycck_node_save($prof);
   }
   
   $settings = _ipeople_setting_roles(IPEOPLE_STUDENT_MLIS_GROUPS);
   if (_ipeople_in_roles($roles, $settings)) {
-    easycck_set_int_field($prof, 'field_istudent_program', 2);
+    easycck_set_int_field($prof, 'field_istudent_program', IPEOPLE_MLIS);
     return easycck_node_save($prof);
   }
   
   $settings = _ipeople_setting_roles(IPEOPLE_STUDENT_INFO_GROUPS);
   if (_ipeople_in_roles($roles, $settings)) {
-    easycck_set_int_field($prof, 'field_istudent_program', 3);
+    easycck_set_int_field($prof, 'field_istudent_program', IPEOPLE_INFO);
     return easycck_node_save($prof);
   }
   
-  easycck_set_int_field($prof, 'field_istudent_program', 4);
+  easycck_set_int_field($prof, 'field_istudent_program', IPEOPLE_NONE);
   return easycck_node_save($prof);
 }
 

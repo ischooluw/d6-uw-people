@@ -427,10 +427,10 @@ $content['fields']  = array (
     'max' => '',
     'prefix' => '',
     'suffix' => '',
-    'allowed_values' => '0|INSC
+    'allowed_values' => '0|INFO
 1|MSIM
 2|MLIS
-3|INFO
+3|INSC
 4|None',
     'allowed_values_php' => '',
     'op' => 'Save field settings',
