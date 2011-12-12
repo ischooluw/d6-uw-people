@@ -1,0 +1,38 @@
+# Description
+The *uwpeople* module provides an interface to the LTS UW People plugin.  Using the UW Groups LTS plugin, the module fetches a "master list" of NetIDs based on a list of groups and then pulls the majority of information from the UW PWS into Drupal using nodes as storage.
+
+**NOTE:** Do not modify content types or fields defined by the *uwpeople* or *dirprof* modules.  You very well could break things and your changes will be overwritten in any updates.  As of Alpha 3, extending the *uwpeople* module is possible by implementing *hook_uwpeople_extend($args)* and *hook_uwpeople_delete($args)*. By implementing these hooks and utilizing the *reverse_node_reference* module, extra data can be associated with the default data that is pulled.
+
+The *dirprof* module extends the *uwpeople* module to provide extra data that can be used for building a faculty/staff/student directory.  Included content types are *Extended Profile* and *Student Profile*.  The module also defines a number of field types that are associated with these content types such as affiliation, eduction, and key works.
+
+The *ipeople* module is a set of iSchool specific extensions to the UW People module.  It is included only as another example on how to extend data pulled by the *uwpeople* module (as it is smaller and easier to understand compared to the *dirprof* module).
+
+Created by the University of Washington Information School; see LICENSE file.
+
+# Install
+**NOTE:** LTS, the UW Groups LTS plugin, and the UW People LTS plugin will have to be setup before the *uwpeople* module will work.  The *uwpeople* module has to be installed and enabled before the *dirprof* or *ipeople* modules can be used.
+
+Move folder to *DRUPAL_ROOT/sites/all/modules* (e.g. */var/www/sites/all/modules/uwpeople_drupal*) then enable & install through the Drupal module list (*/admin/build/modules*).  Both the *uwpeople* and *dirprof* modules can take some time to enable and install.
+
+If you want to refresh the data on a set schedule the *uwpeople* module defines a custom CRON page at (*/uwpeople/cron*).
+
+Don't forget to set user permissions!
+
+# Recovering from Errors
+If an error occurs during an AJAX update (i.e. through the settings page) and
+you get repeated "Another user is currently refreshing people data." errors,
+the following must be done to "reset" the module:
+
+ 1. Restart Apache [non-graceful] (or whatever web server you are using)
+ 2. Delete the variable from the {variable} table with name "uwpeople_lock"
+
+As of Alpha 3 most errors are handled gracefully; some however still cause the
+script to crash and the lock to remain and the above steps will be needed.
+
+[Sometimes] If you close the browser window before the AJAX refresh has completed
+without first pressing cancel and waiting for the redirect, the refresh operation
+will continue.  The steps above will "force quit" the refresh operation.
+
+# Support
+If you find bugs or have suggestions for improving this project, please open
+a new ticket on the project page or send an email to iweb@uw.edu .
